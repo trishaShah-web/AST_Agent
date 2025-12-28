@@ -10,14 +10,15 @@ from graphviz import Digraph
 
 def get_ai_feedback(code):
     print("Analyzing code.....")
-    
+    lines = code.split('\n')
+    numbered_code = "\n".join([f"{i+1}: {line}" for i, line in enumerate(lines)])
     prompt = f"""
     Analyze the following Python code for errors. 
     Return ONLY a comma-separated list of line numbers that have issues.
     If there are no errors, return 0.
     
     Code:
-    {code}
+    {numbered_code}
     """
     
     try:
@@ -47,7 +48,8 @@ def draw_ast(code):
         label=type(node).__name__
         line_no=getattr(node,'lineno','none')
         color="lightblue"
-        if line_no in error_lines:
+        risky_node_types = (ast.BinOp, ast.Name, ast.Call, ast.Attribute, ast.Subscript)
+        if line_no in error_lines and isinstance(node, risky_node_types):
             color='red'
             label+=f'\n (Line:{line_no})'
         dot.node(node_id,label,style='filled',fillcolor=color)
@@ -63,13 +65,12 @@ if __name__ == "__main__":
     
     my_code = """def calculate(x, y):
     z = x + y
-    result = x / y  # Division by zero if y=0
+    result = x / y
     unused_var = 10
     return result
 
 calculate(5, 0)
 print(undefined_variable)"""
-   
 
     
   
