@@ -1,6 +1,6 @@
 import os
 os.environ["PATH"] += os.pathsep + '/opt/homebrew/bin'
-
+import re
 from openai import OpenAI
 from dotenv import load_dotenv
 load_dotenv("api.env")
@@ -13,7 +13,7 @@ def get_ai_feedback(code):
     
     prompt = f"""
     Analyze the following Python code for errors. 
-    Return a comma-separated list of line numbers that have issues.
+    Return ONLY a comma-separated list of line numbers that have issues.
     If there are no errors, return 0.
     
     Code:
@@ -23,15 +23,17 @@ def get_ai_feedback(code):
     try:
         response = client.chat.completions.create(
             model="gpt-4o-mini", 
-            messages=[{"role": "user", "content": prompt}]
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0 #to get consistency in outputs due to hallucinations
         )
         
         # Extract the text answer (e.g., "3")
         result_text = response.choices[0].message.content.strip()
+
         print(f"AI Response: {result_text}")
-        
-        # Convert "3" or "2, 3" into a list of integers [3] or [2, 3]
-        return [int(x.strip()) for x in result_text.split(",") if x.strip().isdigit()]
+        line_numbers = re.findall(r'\d+', result_text)
+
+        return [int(n) for n in line_numbers]
         
     except Exception as e:
         print(f"Brain Error: {e}")
@@ -67,6 +69,11 @@ if __name__ == "__main__":
 
 calculate(5, 0)
 print(undefined_variable)"""
+   
+
+    
+  
+
     draw_ast(my_code)
 
 
